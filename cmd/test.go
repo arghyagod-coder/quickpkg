@@ -42,12 +42,6 @@ to quickly create a Cobra application.`,
 		cm.Stderr = os.Stderr
 		cm.Dir=dirpath
     	cm.Run()
-		cm = exec.Command("tree")
-    // var out bytes.Buffer
-		cm.Stdout = os.Stdout
-		cm.Stderr = os.Stderr
-		cm.Dir=dirpath
-    	cm.Run()
 		os.Remove(dirpath)
 		color.Green("Testing Completed")
 	},

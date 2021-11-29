@@ -5,42 +5,26 @@ Copyright © 2021 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	"fmt"
-	"bytes"
-	"io/ioutil"
-	"github.com/mikkeloscar/aur"
+	"strings"
+	// "bytes"
+	// "time"
+	"github.com/jochasinga/requests"
+	// "io/ioutil"
+	"os"
+	"os/exec"
+	"os/user"
+	"path/filepath"
+
+	"github.com/arghyagod-coder/pkgbuilder/internal"
+	"github.com/fatih/color"
+
+	// "github.com/mikkeloscar/aur"
+	"github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 	// "github.com/arghyagod-coder/pkgbuilder/internal"
 )
-
-
-type Pkg struct {
-	ID             int      `json:"ID"`
-	Name           string   `json:"Name"`
-	PackageBaseID  int      `json:"PackageBaseID"`
-	PackageBase    string   `json:"PackageBase"`
-	Version        string   `json:"Version"`
-	Description    string   `json:"Description"`
-	URL            string   `json:"URL"`
-	NumVotes       int      `json:"NumVotes"`
-	Popularity     float64  `json:"Popularity"`
-	OutOfDate      int      `json:"OutOfDate"`
-	Maintainer     string   `json:"Maintainer"`
-	FirstSubmitted int      `json:"FirstSubmitted"`
-	LastModified   int      `json:"LastModified"`
-	URLPath        string   `json:"URLPath"`
-	Depends        []string `json:"Depends"`
-	MakeDepends    []string `json:"MakeDepends"`
-	CheckDepends   []string `json:"CheckDepends"`
-	Conflicts      []string `json:"Conflicts"`
-	Provides       []string `json:"Provides"`
-	Replaces       []string `json:"Replaces"`
-	OptDepends     []string `json:"OptDepends"`
-	Groups         []string `json:"Groups"`
-	License        []string `json:"License"`
-	Keywords       []string `json:"Keywords"`
-}
 
 // buildCmd represents the build command
 var buildCmd = &cobra.Command{
@@ -53,12 +37,36 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		st, _:= aur.Search(args[0])
-		var pk Pkg
-		json.Marshal(st)
-	
-		json.Unmarshal(bytes.Join(st), &pk)
-		fmt.Println(pk)
+		res, _ := requests.Get(fmt.Sprintf("https://aur.archlinux.org/%v.git", args[0]))
+		fmt.Println(res.Status)
+		if (res.StatusCode==404){
+			color.Red("Could Not Find Package: %v", args[0])
+			os.Exit(5)
+		}else{
+		usr, _ := user.Current()
+		dir := usr.HomeDir
+		dirpath := filepath.Join(dir,".config","pkgbuilder", "tmp")
+		pkgpath := filepath.Join(dir,".config","pkgbuilder", "tmp", args[0])
+		os.MkdirAll(dirpath, os.ModePerm)
+		copy.Copy(args[0], pkgpath)
+		cm := exec.Command("git", "clone", fmt.Sprintf("https://aur.archlinux.org/%v.git", args[0]))
+		pwd,_:= os.Getwd()
+		cm.Stdout = os.Stdout
+		cm.Dir=dirpath
+    	cm.Run()
+		cm = exec.Command("makepkg", "-sf")
+    // var out bytes.Buffer
+		cm.Stdout = os.Stdout
+		cm.Stderr = os.Stderr
+		cm.Dir=pkgpath
+    	cm.Run()
+		os.Remove(dirpath)
+		color.Green("Package Built")
+		files, _ := internal.WalkMatch(pkgpath, "*.tar.zst")
+		splitpath := strings.Split(files[0], "/")
+		filename := splitpath[len(splitpath)-1]
+		internal.CopyFile(files[0], filepath.Join(pwd, filename))
+		}
 	},
 }
 
