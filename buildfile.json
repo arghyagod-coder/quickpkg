@@ -1,0 +1,8 @@
+{
+    "target":"/etc/skel/.config/alacritty/",
+    "destination":"/usr/bin/",
+    "action":"copy",
+    "build_instructions":[
+        
+    ]
+}

@@ -6,15 +6,16 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"log"
+	"os"
 	"strings"
-    "github.com/fatih/color"
-	"github.com/spf13/cobra"
+	"io/ioutil"
+	"encoding/json"
+	"github.com/fatih/color"
+	"time"
 	"github.com/manifoldco/promptui"
+	"github.com/spf13/cobra"
 )
-
-// import . "github.com/ahmetb/go-linq/v3"
 
 // createCmd represents the create command
 var createCmd = &cobra.Command{
@@ -25,6 +26,8 @@ var createCmd = &cobra.Command{
 		createPKGBUILD()
 	},
 }
+
+var syntax string
 
 func init() {
 	rootCmd.AddCommand(createCmd)
@@ -51,6 +54,20 @@ type project struct {
 	deps []string
 	mdeps []string
 	cpkgs []string
+	iss string
+	srcs string
+	s256s string
+}
+
+
+type VSlice []string
+
+func (s VSlice) String() string {
+    var str string
+    for _, i := range s {
+        str += fmt.Sprintf("%d\n", i)
+    }
+    return str
 }
 
 func createPKGBUILD() {
@@ -90,14 +107,14 @@ func createPKGBUILD() {
 	fmt.Printf("Short Description: " )
     var desc string
     fmt.Scanln(&desc)
-	p.desc = desc
+	p.desc = desc;
 
 	prompt := promptui.Select{
 		Label: "Select Architecture",
 		Items: []string{"x86_64 (64-bit)", "i686 (32-bit)", "arm (ARM v5)", "armv6h (ARM v7)", "armv7h (ARM v7 Hardfloat)",
 			"aarch64 (ARM v8 64-bit)", "any"},
 	}
-
+	
 	_, result, err := prompt.Run()
 
 	archs:= []string{"x86_64 (64-bit)", "i686 (32-bit)", "arm (ARM v5)", "armv6h (ARM v7)", "armv7h (ARM v7 Hardfloat)",
@@ -127,7 +144,7 @@ func createPKGBUILD() {
 	}else
 	if (result==archs[6]) {
 		p.arch = "any"
-	}
+	};
 
 	fmt.Printf("Package URL: " )
     var url string
@@ -157,7 +174,91 @@ func createPKGBUILD() {
 	cpkgs:=strings.Split(pkgs, ",")
 	p.cpkgs = cpkgs;
 
-	
+	fmt.Printf("Create a Post Install Script? [yes/no]: " )
+    var iss string
+    fmt.Scanln(&iss)
+
+	if (iss == "no"){
+		
+	}else if (iss=="yes"){
+		p.iss = fmt.Sprintf("%v.install", p.name)
+		f, err := os.Create(p.iss)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		defer f.Close()
+	}else{
+		fmt.Println("Invalid Value")
+	}
+
+	fmt.Printf("Source Files: [seperate by commas. no spaces]" )
+    var srcs string
+    fmt.Scanln(&srcs)
+	lsrcs:=strings.ReplaceAll(srcs, ",", "\n")
+	p.srcs = lsrcs;
+
+	fmt.Printf("Sha256sums of the Source Files: [seperate by commas. no spaces]" )
+    var s256s string
+    fmt.Scanln(&s256s)
+	ls256s:=strings.ReplaceAll(s256s, ",", "\n")
+	p.s256s = ls256s;
+
+	action, dest, target, buildi:= GetJSON()
+	if (action=="copy"){
+		syntax=fmt.Sprintf(`install -dm755 ${pkgdir}${_destname}
+		cp -r  ${srcdir}/%v/* ${pkgdir}${_destname}
+		`, target)
+	}else 
+	if (action=="install"){
+		syntax=fmt.Sprintf(`install -dm755 ${pkgdir}${_destname}
+		install -Dm755  ${srcdir}/%v/* ${pkgdir}${_destname}
+		`, target)
+	}else
+	if (len(buildi)==0){
+		// buildl := strings.ReplaceAll((VSlice(buildi)), )
+		syntax=fmt.Sprintf(`%v
+		install -dm755 ${pkgdir}${_destname}
+		install -Dm755  ${srcdir}/%v/* ${pkgdir}${_destname}
+		`, VSlice(buildi) ,target)
+	}else{
+		fmt.Println("Error in Build File")
+	}
+
+
+
+	content := fmt.Sprintf(`# Maintainer: Arghya Sarkar <arghyasarkar.nolan>
+pkgname=%v
+_pkgname=%v
+_destname="%v"
+_licensedir="/usr/share/licenses/${_pkgname}/"
+pkgver=%v
+pkgrel=%v
+epoch=
+pkgdesc="%v"
+arch=('%v')
+url="%v"
+license=('%v')
+groups=()
+depends=(%v)
+makedepends=(%v)
+checkdepends=()
+optdepends=()
+provides=(%v)
+conflicts=(%v)
+backup=()
+options=()
+install=%v
+source=(%v)
+noextract=("${source[@]##*/}")
+sha256sums=(%v)
+validpgpkeys=()
+package() {
+    %v
+    install -dm755 ${pkgdir}${_licensedir}${_pkgname}
+	install -m644  ${srcdir}/LICENSE ${pkgdir}${_licensedir}${_pkgname}
+}`, p.name, p.name,dest, p.ver, p.rel, p.desc, p.arch, p.url, p.license, p.deps, p.mdeps, p.name, p.cpkgs, p.iss, p.srcs, p.s256s, syntax)
 	f, err := os.Create("PKGBUILD")
 
     if err != nil {
@@ -166,11 +267,35 @@ func createPKGBUILD() {
 
     defer f.Close()
 
-    _, err2 := f.WriteString("fk")
+    _, err2 := f.WriteString(content)
 
     if err2 != nil {
         log.Fatal(err2)
     }
 
-    fmt.Println("done")
+    color.Green("PKGBUILD created!")
+}
+
+type Build struct {
+	Target             		string	 	`json:"target"`              // wallpaper search terms for unsplash
+	Destination             string   	`json:"destination"`                // wallpaper resolution, defaults to 1600x900
+	Action         			string  	`json:"action"`          // whether change wallpaper after a duration
+	Instructions			[]string   	`json:"build_instructions"` // if wallpaper has to be changed, then after how many minutes
+	}
+
+func GetJSON()(string, string, string, []string){
+	jsonFile, err := os.Open("buildfile.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Found buildfile.json..")
+	time.Sleep(5)
+	defer jsonFile.Close()
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	var build Build
+
+	json.Unmarshal(byteValue, &build)
+	return build.Action, build.Destination, build.Target, build.Instructions
 }
