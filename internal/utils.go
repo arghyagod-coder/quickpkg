@@ -6,11 +6,12 @@ import (
 	"log"
 	"os"
 	"os/exec"
+    "errors"
 	// "github.com/fatih/color"
 	"path/filepath"
 )
 
-func CopyFile(src, dst string) {
+func CopyFile(src, dst string) (error) {
 	bytesRead, err := ioutil.ReadFile(src)
 
     if err != nil {
@@ -20,8 +21,9 @@ func CopyFile(src, dst string) {
     err = ioutil.WriteFile(dst, bytesRead, 0644)
 
     if err != nil {
-        log.Fatal(err)
+        return errors.New("Copy Failed")
     }
+    return nil
 }
 
 func WalkMatch(root, pattern string) ([]string, error) {

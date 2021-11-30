@@ -64,9 +64,9 @@ to quickly create a Cobra application.`,
 		cm = exec.Command("git", "commit", "-m", cmm)
 		cm.Dir = pkgdir
 		cm.Run()
-		// cm = exec.Command("git", "push", "-u", "origin", "master")
-		// cm.Dir = pkgdir
-		// cm.Run()
+		cm = exec.Command("git", "push", "-u", "origin", "master")
+		cm.Dir = pkgdir
+		cm.Run()
 		color.Green(`Package Published to AUR!
 		
 Check Out https://aur.archlinux.org/packages/%v`, pkgname)

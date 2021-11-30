@@ -30,7 +30,10 @@ var testCmd = &cobra.Command{
 		inspath := filepath.Join(dir, ".config", "quickpkg", "tmp", files[0])
 		os.MkdirAll(dirpath, os.ModePerm)
 		internal.CopyFile("PKGBUILD", pkgpath)
-		internal.CopyFile(files[0], inspath)
+		err := internal.CopyFile(files[0], inspath)
+		if (err!=nil){
+			color.Blue("Skipping install file as doesn't exist..")
+		}
 		// pwd, _ := os.Getwd()
 		cm := exec.Command("makepkg", "-si", "--noconfirm")
 		// var out bytes.Buffer

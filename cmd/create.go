@@ -55,9 +55,9 @@ type project struct {
 	license string
 	licenseurl string
 	licensesum string
-	deps []string
-	mdeps []string
-	cpkgs []string
+	deps string
+	mdeps string
+	cpkgs string
 	iss string
 	srcs string
 	s256s string
@@ -174,19 +174,19 @@ func createPKGBUILD() {
 	fmt.Printf("Package Dependencies [seperate by commas. no spaces]: " )
     var deps string
     fmt.Scanln(&deps)
-	rdeps:=strings.Split(deps, ",")
+	rdeps:=strings.ReplaceAll(deps, ",", "\n")
 	p.deps = rdeps;
 
 	fmt.Printf("Build Dependencies [seperate by commas. no spaces]: " )
     var mdeps string
     fmt.Scanln(&mdeps)
-	rmdeps:=strings.Split(mdeps, ",")
+	rmdeps:=strings.ReplaceAll(mdeps, ",", "\n")
 	p.mdeps = rmdeps;
 
 	fmt.Printf("Conflicting Packages [seperate by commas. no spaces]: " )
     var pkgs string
     fmt.Scanln(&pkgs)
-	cpkgs:=strings.Split(pkgs, ",")
+	cpkgs:=strings.ReplaceAll(pkgs, ",", "\n")
 	p.cpkgs = cpkgs;
 
 	fmt.Printf("Create a Post Install Script? [yes/no]: " )
@@ -223,19 +223,19 @@ func createPKGBUILD() {
 	action, dest, target, buildi:= GetJSON()
 	if (action=="copy"){
 		syntax=fmt.Sprintf(`install -dm755 ${pkgdir}${_destname}
-		cp -r  ${srcdir}/%v/* ${pkgdir}${_destname}
+cp -r  ${srcdir}/%v/* ${pkgdir}${_destname}
 		`, target)
 	}else 
 	if (action=="install"){
 		syntax=fmt.Sprintf(`install -dm755 ${pkgdir}${_destname}
-		install -Dm755  ${srcdir}/%v/* ${pkgdir}${_destname}
+install -Dm755  ${srcdir}/%v/* ${pkgdir}${_destname}
 		`, target)
 	}else
 	if (len(buildi)==0){
 		// buildl := strings.ReplaceAll((VSlice(buildi)), )
 		syntax=fmt.Sprintf(`%v
-		install -dm755 ${pkgdir}${_destname}
-		install -Dm755  ${srcdir}/%v/* ${pkgdir}${_destname}
+install -dm755 ${pkgdir}${_destname}
+install -Dm755  ${srcdir}/%v/* ${pkgdir}${_destname}
 		`, VSlice(buildi) ,target)
 	}else{
 		fmt.Println("Error in Build File")
@@ -256,11 +256,10 @@ epoch=
 pkgdesc="%v"
 arch=('%v')
 url="%v"
-license=('%v'
-		"%v")
+license=(%v)
 groups=()
-depends=(%v)
-makedepends=(%v)
+depends=(%s)
+makedepends=(%s)
 checkdepends=()
 optdepends=()
 provides=(%v)
@@ -268,7 +267,8 @@ conflicts=(%v)
 backup=()
 options=()
 install=%v
-source=(%v)
+source=(%v
+		"%v")
 noextract=("${source[@]##*/}")
 sha256sums=(%v
 			%v)
@@ -339,5 +339,7 @@ func GetUserConfig()(string, string){
 	var config ConfigData
 
 	json.Unmarshal(byteValue, &config)
-	return config.UserName, config.Email
+	uname := strings.ReplaceAll(config.UserName, "\n", "")
+	mail := strings.ReplaceAll(config.Email, "\n", "")
+	return uname, mail
 }
