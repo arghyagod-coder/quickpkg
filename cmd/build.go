@@ -8,6 +8,7 @@ import (
 	// "encoding/json"
 	"fmt"
 	"strings"
+
 	// "bytes"
 	// "time"
 	"github.com/jochasinga/requests"
@@ -17,25 +18,25 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"github.com/arghyagod-coder/pkgbuilder/internal"
+	"github.com/arghyagod-coder/quickpkg/internal"
 	"github.com/fatih/color"
 
 	// "github.com/mikkeloscar/aur"
 	"github.com/otiai10/copy"
 	"github.com/spf13/cobra"
-	// "github.com/arghyagod-coder/pkgbuilder/internal"
+	// "github.com/arghyagod-coder/quickpkg/internal"
 )
 
 // buildCmd represents the build command
 var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Builds tar.zst from AUR packages",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Long: `The build command automates building of AUR packages. As a developer, many a times you would require a tar.zst file for an AUR package. This helps specially when you are a repository maintainer, and need to hold built packages from AUR
+	
+To install a package in your system from a built package:
+  sudo pacman -U path/to/file.tar.zst
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		res, _ := requests.Get(fmt.Sprintf("https://aur.archlinux.org/packages/%v", args[0]))
 		if res.StatusCode == 404 {
@@ -44,8 +45,8 @@ to quickly create a Cobra application.`,
 		} else {
 			usr, _ := user.Current()
 			dir := usr.HomeDir
-			dirpath := filepath.Join(dir, ".config", "pkgbuilder", "tmp")
-			pkgpath := filepath.Join(dir, ".config", "pkgbuilder", "tmp", args[0])
+			dirpath := filepath.Join(dir, ".config", "quickpkg", "tmp")
+			pkgpath := filepath.Join(dir, ".config", "quickpkg", "tmp", args[0])
 			os.MkdirAll(dirpath, os.ModePerm)
 			copy.Copy(args[0], pkgpath)
 			cm := exec.Command("git", "clone", fmt.Sprintf("https://aur.archlinux.org/%v.git", args[0]))
@@ -65,6 +66,7 @@ to quickly create a Cobra application.`,
 			splitpath := strings.Split(files[0], "/")
 			filename := splitpath[len(splitpath)-1]
 			internal.CopyFile(files[0], filepath.Join(pwd, filename))
+			color.Green("Built package: %v", files[0])
 		}
 	},
 }

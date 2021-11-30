@@ -8,15 +8,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "pkgbuilder",
+	Use:   "pkgbd",
 	Short: "A simple CLI tool for Creating PKGBUILDs for Arch Linux Deployment",
 	Long: `PKGBUILDs are tough? Arch Linux Deployment is confusing? Let's make the work easy for you
 	
-Pkgbuilder helps you create PKGBUILDs easily and in a more organized way.`,
+Quickpkg helps you create PKGBUILDs easily and in a more organized way.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -33,11 +31,9 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.pkgbuilder.yaml)")
+	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.quickpkg.yaml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
-
-

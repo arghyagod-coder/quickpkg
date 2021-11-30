@@ -20,17 +20,18 @@ import (
 // configCmd represents the config command
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Use your Git Credentials for quickpkg",
+	Long: `The config command allows you to edit your configuration for quickpkg.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+The --auto flag allows you to use your Git mail and username for our configuration
+
+Where is the configuration used?
+It is used to define the maintainer in PKGBUILDs as of now.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		InitConfig()
 		jokeTerm, _ := cmd.Flags().GetBool("auto")
-		if (jokeTerm==true){
+		if jokeTerm == true {
 			name, err := exec.Command("git", "config", "--get", "user.name").Output()
 			if err != nil {
 				log.Fatal(err)
@@ -41,11 +42,11 @@ to quickly create a Cobra application.`,
 			}
 			usr, _ := user.Current()
 			dir := usr.HomeDir
-			path := filepath.Join(dir,".config","pkgbuilder","config.json")
+			path := filepath.Join(dir, ".config", "quickpkg", "config.json")
 			config := Configuration{UserName: string(name), Email: string(mail)}
 			jsonstruct, _ := json.MarshalIndent(config, "", " ")
 			_ = ioutil.WriteFile(path, jsonstruct, 0644)
-			
+
 		}
 	},
 }
@@ -64,20 +65,20 @@ func CheckFileExists(filePath string) bool {
 	return !os.IsNotExist(e)
 }
 
-func InitConfig(){
+func InitConfig() {
 	usr, _ := user.Current()
 	dir := usr.HomeDir
-	path := filepath.Join(dir,".config","pkgbuilder","config.json")
-	dirpath := filepath.Join(dir,".config","pkgbuilder")
-	if (CheckFileExists(path)==true){
-		fmt.Println("Configuration File present at ~/.config/pkgbuilder/")
-	}else{
-	os.MkdirAll(dirpath, os.ModePerm)
-	newFile, err := os.Create(path)
-    if err != nil {
-        log.Fatal(err)
-    }
-	newFile.Close()
-    
-}
+	path := filepath.Join(dir, ".config", "quickpkg", "config.json")
+	dirpath := filepath.Join(dir, ".config", "quickpkg")
+	if CheckFileExists(path) == true {
+		fmt.Println("Configuration File present at ~/.config/quickpkg/")
+	} else {
+		os.MkdirAll(dirpath, os.ModePerm)
+		newFile, err := os.Create(path)
+		if err != nil {
+			log.Fatal(err)
+		}
+		newFile.Close()
+
+	}
 }

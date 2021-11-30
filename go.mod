@@ -1,4 +1,4 @@
-module github.com/arghyagod-coder/pkgbuilder
+module github.com/arghyagod-coder/quickpkg
 
 go 1.17
 

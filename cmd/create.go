@@ -5,14 +5,16 @@ Copyright © 2021 Arghya Sarkar <arghyasarkar.nolan@gmail.com>
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
-	"io/ioutil"
-	"encoding/json"
-	"github.com/fatih/color"
 	"time"
+
+	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
@@ -51,12 +53,15 @@ type project struct {
 	arch string
 	url string
 	license string
+	licenseurl string
+	licensesum string
 	deps []string
 	mdeps []string
 	cpkgs []string
 	iss string
 	srcs string
 	s256s string
+
 }
 
 
@@ -156,19 +161,29 @@ func createPKGBUILD() {
     fmt.Scanln(&license)
 	p.license = license;
 
-	fmt.Printf("Package Dependencies: [seperate by commas. no spaces]" )
+	fmt.Printf("License URL (Raw File): " )
+    var licenseurl string
+    fmt.Scanln(&licenseurl)
+	p.licenseurl = licenseurl;
+
+	fmt.Printf("License sha256sum: " )
+    var licensesum string
+    fmt.Scanln(&licensesum)
+	p.licensesum = licensesum;
+
+	fmt.Printf("Package Dependencies [seperate by commas. no spaces]: " )
     var deps string
     fmt.Scanln(&deps)
 	rdeps:=strings.Split(deps, ",")
 	p.deps = rdeps;
 
-	fmt.Printf("Build Dependencies: [seperate by commas. no spaces]" )
+	fmt.Printf("Build Dependencies [seperate by commas. no spaces]: " )
     var mdeps string
     fmt.Scanln(&mdeps)
 	rmdeps:=strings.Split(mdeps, ",")
 	p.mdeps = rmdeps;
 
-	fmt.Printf("Conflicting Packages: [seperate by commas. no spaces]" )
+	fmt.Printf("Conflicting Packages [seperate by commas. no spaces]: " )
     var pkgs string
     fmt.Scanln(&pkgs)
 	cpkgs:=strings.Split(pkgs, ",")
@@ -193,13 +208,13 @@ func createPKGBUILD() {
 		fmt.Println("Invalid Value")
 	}
 
-	fmt.Printf("Source Files: [seperate by commas. no spaces]" )
+	fmt.Printf("Source Files [seperate by commas. no spaces]: " )
     var srcs string
     fmt.Scanln(&srcs)
 	lsrcs:=strings.ReplaceAll(srcs, ",", "\n")
 	p.srcs = lsrcs;
 
-	fmt.Printf("Sha256sums of the Source Files: [seperate by commas. no spaces]" )
+	fmt.Printf("Sha256sums of the Source Files [seperate by commas. no spaces]: " )
     var s256s string
     fmt.Scanln(&s256s)
 	ls256s:=strings.ReplaceAll(s256s, ",", "\n")
@@ -226,9 +241,11 @@ func createPKGBUILD() {
 		fmt.Println("Error in Build File")
 	}
 
+	user, mail := GetUserConfig()
 
 
-	content := fmt.Sprintf(`# Maintainer: Arghya Sarkar <arghyasarkar.nolan>
+
+	content := fmt.Sprintf(`# Maintainer: %v %v
 pkgname=%v
 _pkgname=%v
 _destname="%v"
@@ -239,7 +256,8 @@ epoch=
 pkgdesc="%v"
 arch=('%v')
 url="%v"
-license=('%v')
+license=('%v'
+		"%v")
 groups=()
 depends=(%v)
 makedepends=(%v)
@@ -252,13 +270,14 @@ options=()
 install=%v
 source=(%v)
 noextract=("${source[@]##*/}")
-sha256sums=(%v)
+sha256sums=(%v
+			%v)
 validpgpkeys=()
 package() {
     %v
     install -dm755 ${pkgdir}${_licensedir}${_pkgname}
 	install -m644  ${srcdir}/LICENSE ${pkgdir}${_licensedir}${_pkgname}
-}`, p.name, p.name,dest, p.ver, p.rel, p.desc, p.arch, p.url, p.license, p.deps, p.mdeps, p.name, p.cpkgs, p.iss, p.srcs, p.s256s, syntax)
+}`, user,mail, p.name, p.name,dest, p.ver, p.rel, p.desc, p.arch, p.url, p.license, p.deps, p.mdeps, p.name, p.cpkgs, p.iss, p.srcs, p.licenseurl, p.s256s, p.licensesum, syntax)
 	f, err := os.Create("PKGBUILD")
 
     if err != nil {
@@ -298,4 +317,27 @@ func GetJSON()(string, string, string, []string){
 
 	json.Unmarshal(byteValue, &build)
 	return build.Action, build.Destination, build.Target, build.Instructions
+}
+
+type ConfigData struct {
+	UserName string 	`json:"UserName"`
+	Email string		`json:"Email"`
+}	
+
+func GetUserConfig()(string, string){
+	homedir, _ := os.UserHomeDir()
+	jsonFile, err := os.Open(filepath.Join(homedir, ".config", "quickpkg", "config.json"))
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Found config.json..")
+	time.Sleep(5)
+	defer jsonFile.Close()
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	var config ConfigData
+
+	json.Unmarshal(byteValue, &config)
+	return config.UserName, config.Email
 }

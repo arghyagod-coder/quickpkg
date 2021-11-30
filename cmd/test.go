@@ -5,43 +5,40 @@ Copyright © 2021 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"os/user"
-	"github.com/fatih/color"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 
-	"github.com/arghyagod-coder/pkgbuilder/internal"
+	"github.com/fatih/color"
+
+	"github.com/arghyagod-coder/quickpkg/internal"
 	"github.com/spf13/cobra"
 )
 
 // testCmd represents the test command
 var testCmd = &cobra.Command{
 	Use:   "test",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Test your Package",
+	Long: `Test the PKGBUILD and other files created by "pkgbd create" commmand. This command should be ran in the directory where you ran the create command. Not`,
 	Run: func(cmd *cobra.Command, args []string) {
 		usr, _ := user.Current()
 		dir := usr.HomeDir
-		dirpath := filepath.Join(dir,".config","pkgbuilder", "tmp")
-		pkgpath := filepath.Join(dir,".config","pkgbuilder", "tmp", "PKGBUILD")
+		dirpath := filepath.Join(dir, ".config", "quickpkg", "tmp")
+		pkgpath := filepath.Join(dir, ".config", "quickpkg", "tmp", "PKGBUILD")
 		files, _ := internal.WalkMatch("./", "*.install")
-		inspath := filepath.Join(dir,".config","pkgbuilder", "tmp", files[0])
+		inspath := filepath.Join(dir, ".config", "quickpkg", "tmp", files[0])
 		os.MkdirAll(dirpath, os.ModePerm)
 		internal.CopyFile("PKGBUILD", pkgpath)
 		internal.CopyFile(files[0], inspath)
 		// pwd, _ := os.Getwd()
-		cm := exec.Command("makepkg", "-si")
-    // var out bytes.Buffer
+		cm := exec.Command("makepkg", "-si", "--noconfirm")
+		// var out bytes.Buffer
 		cm.Stdout = os.Stdout
 		cm.Stderr = os.Stderr
-		cm.Dir=dirpath
-    	cm.Run()
+		cm.Stdin = os.Stdin
+		cm.Dir = dirpath
+		cm.Run()
 		os.Remove(dirpath)
 		color.Green("Testing Completed")
 	},

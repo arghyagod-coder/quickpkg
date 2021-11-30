@@ -6,7 +6,7 @@ import shutil
 import os
 
 # build config
-APP_NAME = "pkgbuilder"
+APP_NAME = "quickpkg"
 STRIP = True
 VERBOSE = False
 FORMAT = True

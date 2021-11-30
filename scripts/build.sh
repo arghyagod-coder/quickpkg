@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 platforms=("windows/amd64" "freebsd/amd64" "darwin/amd64" "darwin/arm64" "linux/amd64")
-app_name="pkgbuilder"
+app_name="quickpkg"
 
 for platform in "${platforms[@]}"
 do
