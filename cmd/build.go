@@ -38,37 +38,36 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		res, _ := requests.Get(fmt.Sprintf("https://aur.archlinux.org/packages/%v", args[0]))
-		if (res.StatusCode==404){
+		if res.StatusCode == 404 {
 			color.Red("Could Not Find Package: %v", args[0])
 			os.Exit(5)
-		}else{
-		usr, _ := user.Current()
-		dir := usr.HomeDir
-		dirpath := filepath.Join(dir,".config","pkgbuilder", "tmp")
-		pkgpath := filepath.Join(dir,".config","pkgbuilder", "tmp", args[0])
-		os.MkdirAll(dirpath, os.ModePerm)
-		copy.Copy(args[0], pkgpath)
-		cm := exec.Command("git", "clone", fmt.Sprintf("https://aur.archlinux.org/%v.git", args[0]))
-		pwd,_:= os.Getwd()
-		cm.Stdout = os.Stdout
-		cm.Dir=dirpath
-    	cm.Run()
-		cm = exec.Command("makepkg", "-sf")
-    // var out bytes.Buffer
-		cm.Stdout = os.Stdout
-		cm.Stderr = os.Stderr
-		cm.Dir=pkgpath
-    	cm.Run()
-		os.Remove(dirpath)
-		color.Green("Package Built")
-		files, _ := internal.WalkMatch(pkgpath, "*.tar.zst")
-		splitpath := strings.Split(files[0], "/")
-		filename := splitpath[len(splitpath)-1]
-		internal.CopyFile(files[0], filepath.Join(pwd, filename))
+		} else {
+			usr, _ := user.Current()
+			dir := usr.HomeDir
+			dirpath := filepath.Join(dir, ".config", "pkgbuilder", "tmp")
+			pkgpath := filepath.Join(dir, ".config", "pkgbuilder", "tmp", args[0])
+			os.MkdirAll(dirpath, os.ModePerm)
+			copy.Copy(args[0], pkgpath)
+			cm := exec.Command("git", "clone", fmt.Sprintf("https://aur.archlinux.org/%v.git", args[0]))
+			pwd, _ := os.Getwd()
+			cm.Stdout = os.Stdout
+			cm.Dir = dirpath
+			cm.Run()
+			cm = exec.Command("makepkg", "-sf")
+			// var out bytes.Buffer
+			cm.Stdout = os.Stdout
+			cm.Stderr = os.Stderr
+			cm.Dir = pkgpath
+			cm.Run()
+			os.Remove(dirpath)
+			color.Green("Package Built")
+			files, _ := internal.WalkMatch(pkgpath, "*.tar.zst")
+			splitpath := strings.Split(files[0], "/")
+			filename := splitpath[len(splitpath)-1]
+			internal.CopyFile(files[0], filepath.Join(pwd, filename))
 		}
 	},
 }
-
 
 func init() {
 	rootCmd.AddCommand(buildCmd)
