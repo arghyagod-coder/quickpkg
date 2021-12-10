@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
+	"github.com/arghyagod-coder/quickpkg/internal"
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -55,12 +55,12 @@ type project struct {
 	license string
 	licenseurl string
 	licensesum string
-	deps string
-	mdeps string
-	cpkgs string
+	deps []string
+	mdeps []string
+	cpkgs []string
 	iss string
-	srcs string
-	s256s string
+	srcs []string
+	s256s []string
 
 }
 
@@ -174,19 +174,19 @@ func createPKGBUILD() {
 	fmt.Printf("Package Dependencies [seperate by commas. no spaces]: " )
     var deps string
     fmt.Scanln(&deps)
-	rdeps:=strings.ReplaceAll(deps, ",", "\n")
+	rdeps:=strings.Split(deps, ",")
 	p.deps = rdeps;
 
 	fmt.Printf("Build Dependencies [seperate by commas. no spaces]: " )
     var mdeps string
     fmt.Scanln(&mdeps)
-	rmdeps:=strings.ReplaceAll(mdeps, ",", "\n")
+	rmdeps:=strings.Split(mdeps, ",")
 	p.mdeps = rmdeps;
 
 	fmt.Printf("Conflicting Packages [seperate by commas. no spaces]: " )
     var pkgs string
     fmt.Scanln(&pkgs)
-	cpkgs:=strings.ReplaceAll(pkgs, ",", "\n")
+	cpkgs:=strings.Split(pkgs, ",")
 	p.cpkgs = cpkgs;
 
 	fmt.Printf("Create a Post Install Script? [yes/no]: " )
@@ -211,13 +211,13 @@ func createPKGBUILD() {
 	fmt.Printf("Source Files [seperate by commas. no spaces]: " )
     var srcs string
     fmt.Scanln(&srcs)
-	lsrcs:=strings.ReplaceAll(srcs, ",", "\n")
+	lsrcs:=strings.Split(srcs, ",")
 	p.srcs = lsrcs;
 
 	fmt.Printf("Sha256sums of the Source Files [seperate by commas. no spaces]: " )
     var s256s string
     fmt.Scanln(&s256s)
-	ls256s:=strings.ReplaceAll(s256s, ",", "\n")
+	ls256s:=strings.Split(s256s, ",")
 	p.s256s = ls256s;
 
 	action, dest, target, buildi:= GetJSON()
@@ -271,13 +271,13 @@ source=(%v
 		"%v")
 noextract=("${source[@]##*/}")
 sha256sums=(%v
-			%v)
+			"%v")
 validpgpkeys=()
 package() {
     %v
     install -dm755 ${pkgdir}${_licensedir}${_pkgname}
 	install -m644  ${srcdir}/LICENSE ${pkgdir}${_licensedir}${_pkgname}
-}`, user,mail, p.name, p.name,dest, p.ver, p.rel, p.desc, p.arch, p.url, p.license, p.deps, p.mdeps, p.name, p.cpkgs, p.iss, p.srcs, p.licenseurl, p.s256s, p.licensesum, syntax)
+}`, user,mail, p.name, p.name,dest, p.ver, p.rel, p.desc, p.arch, p.url, p.license, internal.ArrStrings(p.deps), internal.ArrStrings(p.mdeps), p.name, internal.ArrStrings(p.cpkgs), p.iss, internal.ArrStrings(p.srcs), p.licenseurl, internal.ArrStrings(p.s256s), p.licensesum, syntax)
 	f, err := os.Create("PKGBUILD")
 
     if err != nil {

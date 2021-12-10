@@ -67,3 +67,13 @@ func (s VSlice) String() string {
     }
     return str
 }
+
+type ArrStrings []string
+
+func (s ArrStrings) String() string {
+    var str string
+    for _, i := range s {
+        str += fmt.Sprintf("\"%v\"\n", i)
+    }
+    return str
+}
