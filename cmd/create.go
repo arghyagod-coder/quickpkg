@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
 	"github.com/arghyagod-coder/quickpkg/internal"
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
@@ -82,9 +83,9 @@ func createPKGBUILD() {
 	Pwd := strings.Split(pwd, "/")
 	assumption:= Pwd[len(Pwd)-1]
 
-	fmt.Printf("Package Name [%v]: ", assumption)
-    var pname string
-    fmt.Scanln(&pname)
+	// fmt.Printf("Package Name [%v]: ", assumption)
+    // var pname string
+	pname := internal.Input(fmt.Sprintf("Package Name [%v] ",assumption))
 
 	if (pname == ""){
 		color.Cyan("Set package name to default value %v", assumption)
@@ -93,9 +94,7 @@ func createPKGBUILD() {
 		p.name = pname
 	}
 
-	fmt.Printf("Version [0.1.0]: " )
-    var pkgver string
-    fmt.Scanln(&pkgver)
+	pkgver := internal.Input("Version [0.1.0]")
 
 	if (pkgver == ""){
 		color.Cyan("Set project name to default value 0.1.0")
@@ -104,14 +103,10 @@ func createPKGBUILD() {
 		p.ver = pkgver
 	}
 
-	fmt.Printf("Release Number: " )
-    var pkgrel int
-    fmt.Scanln(&pkgrel)
+	pkgrel := internal.IntInput("Release Number")
 	p.rel = pkgrel;
 
-	fmt.Printf("Short Description: " )
-    var desc string
-    fmt.Scanln(&desc)
+	desc := internal.Input("Short Description")
 	p.desc = desc;
 
 	prompt := promptui.Select{
@@ -151,47 +146,31 @@ func createPKGBUILD() {
 		p.arch = "any"
 	};
 
-	fmt.Printf("Package URL: " )
-    var url string
-    fmt.Scanln(&url)
+	url:=internal.Input("Package URL: " )
 	p.url = url;
 
-	fmt.Printf("License: " )
-    var license string
-    fmt.Scanln(&license)
+	license:=internal.Input("License: " )
 	p.license = license;
 
-	fmt.Printf("License URL (Raw File): " )
-    var licenseurl string
-    fmt.Scanln(&licenseurl)
+	licenseurl:=internal.Input("License URL (Raw File): " )
 	p.licenseurl = licenseurl;
 
-	fmt.Printf("License sha256sum: " )
-    var licensesum string
-    fmt.Scanln(&licensesum)
+	licensesum:=internal.Input("License sha256sum: " )
 	p.licensesum = licensesum;
 
-	fmt.Printf("Package Dependencies [seperate by commas. no spaces]: " )
-    var deps string
-    fmt.Scanln(&deps)
+	deps:=internal.Input("Package Dependencies [seperate by commas. no spaces]: " )
 	rdeps:=strings.Split(deps, ",")
 	p.deps = rdeps;
 
-	fmt.Printf("Build Dependencies [seperate by commas. no spaces]: " )
-    var mdeps string
-    fmt.Scanln(&mdeps)
+	mdeps:=internal.Input("Build Dependencies [seperate by commas. no spaces]: " )
 	rmdeps:=strings.Split(mdeps, ",")
 	p.mdeps = rmdeps;
 
-	fmt.Printf("Conflicting Packages [seperate by commas. no spaces]: " )
-    var pkgs string
-    fmt.Scanln(&pkgs)
+	pkgs:=internal.Input("Conflicting Packages [seperate by commas. no spaces]: " )
 	cpkgs:=strings.Split(pkgs, ",")
 	p.cpkgs = cpkgs;
 
-	fmt.Printf("Create a Post Install Script? [yes/no]: " )
-    var iss string
-    fmt.Scanln(&iss)
+	iss:=internal.Input("Create a Post Install Script? [yes/no]: " )
 
 	if (iss == "no"){
 		
@@ -208,15 +187,11 @@ func createPKGBUILD() {
 		fmt.Println("Invalid Value")
 	}
 
-	fmt.Printf("Source Files [seperate by commas. no spaces]: " )
-    var srcs string
-    fmt.Scanln(&srcs)
+	srcs:=internal.Input("Source Files [seperate by commas. no spaces]: " )
 	lsrcs:=strings.Split(srcs, ",")
 	p.srcs = lsrcs;
 
-	fmt.Printf("Sha256sums of the Source Files [seperate by commas. no spaces]: " )
-    var s256s string
-    fmt.Scanln(&s256s)
+	s256s:=internal.Input("Sha256sums of the Source Files [seperate by commas. no spaces]: " )
 	ls256s:=strings.Split(s256s, ",")
 	p.s256s = ls256s;
 
@@ -229,14 +204,14 @@ cp -r  ${srcdir}/%v/* ${pkgdir}${_destname}
 	if (action=="install"){
 		syntax=fmt.Sprintf(`install -dm755 ${pkgdir}${_destname}
 install -Dm755  ${srcdir}/%v/* ${pkgdir}${_destname}
-		`, target)
+`, target)
 	}else
 	if (len(buildi)==0){
 		// buildl := strings.ReplaceAll((VSlice(buildi)), )
 		syntax=fmt.Sprintf(`%v
 install -dm755 ${pkgdir}${_destname}
 install -Dm755  ${srcdir}/%v/* ${pkgdir}${_destname}
-		`, VSlice(buildi) ,target)
+`, VSlice(buildi) ,target)
 	}else{
 		fmt.Println("Error in Build File")
 	}

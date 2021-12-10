@@ -27,9 +27,7 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		pwd,_:= os.Getwd()
-		fmt.Printf("Enter your Package Name:" )
-		var pkgname string
-		fmt.Scanln(&pkgname)
+		pkgname:=internal.Input("Enter your Package Name:" )
 		cm := exec.Command("git", "clone", fmt.Sprintf("ssh://aur@aur.archlinux.org/%v.git", pkgname))
 		cm.Stdout = os.Stdout
 		cm.Stderr = os.Stderr
@@ -55,9 +53,7 @@ to quickly create a Cobra application.`,
 				log.Fatal(err2)
 			}
 
-		fmt.Printf("Enter your Commit Message:" )
-		var cmm string
-		fmt.Scanln(&cmm)
+		cmm:=internal.Input("Enter your Commit Message:" )
 		cm = exec.Command("git", "add", ".")
 		cm.Dir = pkgdir
 		cm.Run()
